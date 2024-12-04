@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habbitwithomer/database/habit_database.dart';
 import 'package:habbitwithomer/pages/home_page.dart';
 import 'package:habbitwithomer/themes/dark_mode.dart';
 import 'package:habbitwithomer/themes/light_mode.dart';
@@ -6,9 +7,19 @@ import 'package:habbitwithomer/themes/light_mode.dart';
 import 'package:habbitwithomer/themes/theme_provider.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  //initailze database
+  await HabitDatabase.initialize();
+  await HabitDatabase().saveFirstLaunchDate();
+
   runApp(
-    ChangeNotifierProvider(create: (context) => ThemeProvider(),child: const MyApp(),)
+   MultiProvider(providers: [
+     ChangeNotifierProvider(create: (context) => HabitDatabase()),
+     ChangeNotifierProvider(create: (context) => ThemeProvider())
+   ],
+   child: const MyApp(),)
   );
 }
 
