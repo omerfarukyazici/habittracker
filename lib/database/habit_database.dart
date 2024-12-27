@@ -7,9 +7,6 @@ import '../models/habit.dart';
 class HabitDatabase extends ChangeNotifier{
   static late Isar isar;
 
-
-
-
   //INITALIZE DATABASE
   static Future<void> initialize() async{
     final dir = await getApplicationDocumentsDirectory();
@@ -66,49 +63,49 @@ class HabitDatabase extends ChangeNotifier{
 
   //UPDATE -check habit on and off
 
-  Future<void> updateHabitCompletion(int id, bool isCompleted) async{
-    //find spesific habit
-    final habit =await isar.habits.get(id);
+  Future<void> updateHabitCompletion(int id, bool isCompleted) async {
+    // Belirtilen alışkanlığı bul
+    final habit = await isar.habits.get(id);
 
-    //update completion status
+    if (habit != null) {
+      await isar.writeTxn(() async {
+        final today = DateTime.now();
+        final todayDate = DateTime(today.year, today.month, today.day);
 
-    if(habit != null){
-      await isar.writeTxn(()async{
-        //if habit completed -> add the current date to completed days list
-        if(isCompleted && !habit.completedDays.contains(DateTime.now())){
-          //today
-          final today =DateTime.now();
-
-          habit.completedDays.add(DateTime(today.year,today.month,today.day));
-          //eğer habit tamamlanmadıysa o listeden çıkartılır
-        }else {
-          habit.completedDays.removeWhere((date) =>
-          date.year==DateTime.now().year&&
-          date.month==DateTime.now().month&&
-          date.day==DateTime.now().day
-          );
-
+        // Eğer tamamlandıysa, bugünün tarihini completedDays listesine ekle
+        if (isCompleted && !habit.completedDays.contains(todayDate)) {
+          habit.completedDays.add(todayDate);
         }
+        // Eğer tamamlanmadıysa bugünün tarihini listeden çıkar
+        else if (!isCompleted) {
+          habit.completedDays.removeWhere((date) =>
+          date.year == today.year &&
+              date.month == today.month &&
+              date.day == today.day);
+        }
+
         await isar.habits.put(habit);
       });
-      readHabits();
-    }
-    //update- edit habit name
-    Future<void> updateHabitName(int id, String newName) async {
-      //find spesific habit
-      final habit =await isar.habits.get(id);
 
-      //update habit name
-      if(habit != null){
-        //update name
-        await isar.writeTxn(() async{
-          habit.name=newName;
-          await isar.habits.put(habit);
-        });
-      }
+      readHabits(); // UI güncellemek için
     }
-    readHabits();
   }
+
+  Future<void> updateHabitName(int id, String newName) async {
+    // Belirtilen alışkanlığı bul
+    final habit = await isar.habits.get(id);
+
+    if (habit != null) {
+      await isar.writeTxn(() async {
+        // Alışkanlık ismini güncelle
+        habit.name = newName;
+        await isar.habits.put(habit);
+      });
+
+      readHabits(); // UI güncellemek için
+    }
+  }
+
   //Delete
 
   Future<void>deleteHabit(int id) async {
